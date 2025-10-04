@@ -7,8 +7,15 @@ const foodPartnerRoutes = require('./routes/food-partner.routes');
 const cors = require('cors');
 
 const app = express();
+
+// Allow the client origin to be configured via environment (useful in production)
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+
+// If running behind a proxy (like on render/Heroku), enable trust proxy so secure cookies work
+app.set('trust proxy', 1);
+
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: CLIENT_ORIGIN,
     credentials: true
 }));
 app.use(cookieParser());
