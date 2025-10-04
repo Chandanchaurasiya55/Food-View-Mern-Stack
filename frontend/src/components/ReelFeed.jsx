@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 // Reusable feed for vertical reels
@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom'
 // - emptyMessage: string
 const ReelFeed = ({ items = [], onLike, onSave, emptyMessage = 'No videos yet.' }) => {
   const videoRefs = useRef(new Map())
+  const [unmuteFailedIds, setUnmuteFailedIds] = useState(new Set())
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -16,8 +17,20 @@ const ReelFeed = ({ items = [], onLike, onSave, emptyMessage = 'No videos yet.' 
         entries.forEach((entry) => {
           const video = entry.target
           if (!(video instanceof HTMLVideoElement)) return
+          const isPartner = video.dataset.foodpartner === '1'
           if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
-            video.play().catch(() => { /* ignore autoplay errors */ })
+            // Attempt to auto-unmute partner videos so visitors hear partner uploads automatically.
+            if (isPartner) {
+              video.muted = false
+              video.play().catch(() => {
+                // If the browser blocks unmuted autoplay, fall back to muted autoplay and remember the failure.
+                try { video.muted = true } catch { /* ignore */ }
+                setUnmuteFailedIds((prev) => new Set(prev).add(video.dataset.id))
+                video.play().catch(() => { /* ignore second play error */ })
+              })
+            } else {
+              video.play().catch(() => { /* ignore autoplay errors */ })
+            }
           } else {
             video.pause()
           }
@@ -32,7 +45,39 @@ const ReelFeed = ({ items = [], onLike, onSave, emptyMessage = 'No videos yet.' 
 
   const setVideoRef = (id) => (el) => {
     if (!el) { videoRefs.current.delete(id); return }
+    // store reference and set metadata attrs used by observer logic
+    el.dataset.id = id
+    // if item-level foodPartner flag exists we set it when rendering; keep it here if not
     videoRefs.current.set(id, el)
+  }
+
+  const toggleMute = (id) => {
+    const vid = videoRefs.current.get(id)
+    if (!vid) return
+    const willUnmute = vid.muted === true
+    try {
+      vid.muted = !vid.muted
+  } catch { /* ignore */ }
+
+    if (willUnmute) {
+      // try to play with audio; browsers may block this
+      vid.play().then(() => {
+        // success - clear any failure marker
+        setUnmuteFailedIds((prev) => {
+          const copy = new Set(prev)
+          copy.delete(id)
+          return copy
+        })
+  try { localStorage.setItem('reels_audio_enabled', '1') } catch { /* ignore */ }
+      }).catch(() => {
+        // failed to unmute-autoplay: revert to muted and mark failed so UI can indicate
+  try { vid.muted = true } catch { /* ignore */ }
+        setUnmuteFailedIds((prev) => new Set(prev).add(id))
+      })
+    } else {
+      // muted now
+  try { localStorage.removeItem('reels_audio_enabled') } catch { /* ignore */ }
+    }
   }
 
   return (
@@ -50,7 +95,8 @@ const ReelFeed = ({ items = [], onLike, onSave, emptyMessage = 'No videos yet.' 
               ref={setVideoRef(item._id)}
               className="reel-video"
               src={item.video}
-              muted
+              muted={!(item.foodPartner)}
+              data-foodpartner={item.foodPartner ? '1' : '0'}
               playsInline
               loop
               preload="metadata"
@@ -92,6 +138,22 @@ const ReelFeed = ({ items = [], onLike, onSave, emptyMessage = 'No videos yet.' 
                     </svg>
                   </button>
                   <div className="reel-action__count">{item.commentsCount ?? (Array.isArray(item.comments) ? item.comments.length : 0)}</div>
+                </div>
+
+                {/* Audio toggle - allow users to enable sound for the current reel */}
+                <div className="reel-action-group">
+                  <button
+                    className="reel-action reel-audio-toggle"
+                    onClick={() => toggleMute(item._id)}
+                    aria-label="Toggle audio"
+                    title={unmuteFailedIds.has(item._id) ? 'Tap to enable audio (requires interaction)' : 'Toggle audio'}
+                  >
+                    {/* Simple speaker icon - filled when unmuted */}
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                      <path d="M19 8a4 4 0 0 1 0 8" />
+                    </svg>
+                  </button>
                 </div>
               </div>
 

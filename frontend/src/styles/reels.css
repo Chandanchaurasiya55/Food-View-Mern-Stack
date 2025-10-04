@@ -139,6 +139,11 @@
   font-size: 12px;
 }
 
+/* audio toggle - show subtle visual when active/unmuted */
+.reel-audio-toggle svg { opacity: .95 }
+.reel-audio-toggle[aria-pressed="true"] { background: rgba(255,255,255,0.12); color: var(--color-accent) }
+.reel-audio-toggle[title] { cursor: pointer }
+
 .reel-action-group{
   display: flex;
   flex-direction: column;
