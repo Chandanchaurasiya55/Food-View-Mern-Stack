@@ -1,9 +1,10 @@
 import React from 'react';
 import '../../styles/auth-shared.css';
-import axios from 'axios';
+import axios from '../../setupAxios';
 import { useNavigate } from 'react-router-dom';
 
 
+// API_URL is configured in setupAxios via baseURL; use axios directly
 const API_URL = import.meta.env.VITE_API_URL;
 
 const FoodPartnerLogin = () => {
@@ -16,10 +17,10 @@ const FoodPartnerLogin = () => {
     const email = e.target.email.value;
     const password = e.target.password.value;
 
-    const response = await axios.post(`${API_URL}/api/auth/food-partner/login`, {
+    const response = await axios.post(`/api/auth/food-partner/login`, {
       email,
       password
-    }, { withCredentials: true });
+    });
 
     console.log(response.data);
 

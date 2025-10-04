@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import axios from 'axios';
+import axios from '../../setupAxios';
 import '../../styles/create-food.css';
 import { useNavigate } from 'react-router-dom';
 
 
-const API_URL = import.meta.env.VITE_API_URL;
+// configured axios instance sets baseURL from VITE_API_URL and withCredentials
 
 const CreateFood = () => {
     const [ name, setName ] = useState('');
@@ -59,9 +59,7 @@ const CreateFood = () => {
         formData.append('description', description);
         formData.append("mama", videoFile);
 
-        const response = await axios.post(`${API_URL}/api/food`, formData, {
-            withCredentials: true,
-        })
+        const response = await axios.post(`/api/food`, formData)
 
         console.log(response.data);
         navigate("/"); // Redirect to home or another page after successful creation

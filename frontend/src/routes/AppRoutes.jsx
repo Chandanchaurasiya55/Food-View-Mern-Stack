@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 import { BrowserRouter as Router, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import axios from '../setupAxios';
 import UserRegister from '../pages/auth/UserRegister';
 import ChooseRegister from '../pages/auth/ChooseRegister';
 import UserLogin from '../pages/auth/UserLogin';
@@ -30,21 +31,18 @@ const AppRoutesInner = () => {
 
         let mounted = true;
 
-        fetch(`${import.meta.env.VITE_API_URL}/api/auth/user/me`, {
-            method: 'GET',
-            credentials: 'include'
-        }).then(async (res) => {
-            if (!mounted) return;
-            if (res.status === 200) {
-                // user is authenticated; nothing to do
-                return;
-            }
-            // on any 401 or other failure, redirect to login
-            navigate('/user/login', { replace: true });
-        }).catch(() => {
-            if (!mounted) return;
-            navigate('/user/login', { replace: true });
-        });
+        // Use configured axios instance which sets baseURL and withCredentials
+        axios.get('/api/auth/user/me')
+            .then((res) => {
+                if (!mounted) return;
+                // if request succeeded (200) user is authenticated
+                if (res.status === 200) return;
+                navigate('/user/login', { replace: true });
+            })
+            .catch(() => {
+                if (!mounted) return;
+                navigate('/user/login', { replace: true });
+            });
 
         return () => { mounted = false };
     }, [location.pathname, navigate]);

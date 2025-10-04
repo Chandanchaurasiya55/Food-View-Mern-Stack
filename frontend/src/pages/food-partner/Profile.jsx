@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import '../../styles/profile.css'
 import { useParams } from 'react-router-dom'
-import axios from 'axios'
+import axios from '../../setupAxios'
 
-
-const API_URL = import.meta.env.VITE_API_URL;
+// axios instance uses VITE_API_URL as baseURL and attaches credentials
 
 const Profile = () => {
     const { id } = useParams()
@@ -12,7 +11,7 @@ const Profile = () => {
     const [ videos, setVideos ] = useState([])
 
     useEffect(() => {
-        axios.get(`${API_URL}/api/food-partner/${id}`, { withCredentials: true })
+        axios.get(`/api/food-partner/${id}`)
             .then(response => {
                 setProfile(response.data.foodPartner)
                 setVideos(response.data.foodPartner.foodItems)
