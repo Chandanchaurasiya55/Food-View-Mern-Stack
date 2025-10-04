@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { BrowserRouter as Router, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import axios from '../setupAxios';
 import UserRegister from '../pages/auth/UserRegister';
@@ -15,6 +15,32 @@ import Profile from '../pages/food-partner/Profile';
 const AppRoutesInner = () => {
     const location = useLocation();
     const navigate = useNavigate();
+
+    // ProtectedHome: used for the root route. If the visitor is not
+    // authenticated as a regular user, we redirect them to /user/login.
+    const ProtectedHome = () => {
+        const [checking, setChecking] = useState(true);
+        useEffect(() => {
+            let mounted = true;
+            axios.get('/api/auth/user/me')
+                .then((res) => {
+                    if (!mounted) return;
+                    if (res.status === 200) {
+                        setChecking(false);
+                        return;
+                    }
+                    navigate('/user/login', { replace: true });
+                })
+                .catch(() => {
+                    if (!mounted) return;
+                    navigate('/user/login', { replace: true });
+                });
+            return () => { mounted = false };
+    }, []);
+
+        if (checking) return null;
+        return (<><Home /><BottomNav /></>);
+    }
 
     useEffect(() => {
         // Verify auth by calling backend /api/auth/user/me which checks cookie token.
@@ -55,7 +81,7 @@ const AppRoutesInner = () => {
                 // to a food-partner). Only navigate to login for other cases.
                 const stillSkip = (location.pathname === '/create-food' && localStorage.getItem('foodPartnerAuth') === 'true');
                 if (stillSkip) return;
-                navigate('/user/login', { replace: true });
+                navigate('/', { replace: true });
             });
 
         return () => { mounted = false };
@@ -68,7 +94,7 @@ const AppRoutesInner = () => {
             <Route path="/user/login" element={<UserLogin />} />
             <Route path="/food-partner/register" element={<FoodPartnerRegister />} />
             <Route path="/food-partner/login" element={<FoodPartnerLogin />} />
-            <Route path="/" element={<><Home /><BottomNav /></>} />
+            <Route path="/" element={<ProtectedHome />} />
             <Route path="/saved" element={<><Saved /><BottomNav /></>} />
             <Route path="/create-food" element={<CreateFood />} />
             <Route path="/food-partner/:id" element={<Profile />} />
