@@ -7,6 +7,9 @@ const router = express.Router();
 router.post('/user/register', authController.registerUser)
 router.post('/user/login', authController.loginUser)
 router.get('/user/logout', authController.logoutUser)
+// protected: get current user
+const { authUserMiddleware } = require('../middlewares/auth.middleware');
+router.get('/user/me', authUserMiddleware, authController.getCurrentUser);
 
 
 

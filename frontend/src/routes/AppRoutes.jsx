@@ -16,8 +16,8 @@ const AppRoutesInner = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // If there's no token cookie, consider the visitor unauthenticated/new.
-        // Allow access to register/login routes so users can sign up.
+        // Verify auth by calling backend /api/auth/user/me which checks cookie token.
+        // This handles token expiry/deletion server-side and avoids relying on document.cookie alone.
         const allowedPaths = [
             '/user/register',
             '/food-partner/register',
@@ -26,12 +26,27 @@ const AppRoutesInner = () => {
             '/register'
         ];
 
-        const hasToken = document.cookie && document.cookie.indexOf('token=') !== -1;
+        if (allowedPaths.includes(location.pathname)) return;
 
-        if (!hasToken && !allowedPaths.includes(location.pathname)) {
-            // redirect to user login for new/unauthenticated visitors
+        let mounted = true;
+
+        fetch(`${import.meta.env.VITE_API_URL}/api/auth/user/me`, {
+            method: 'GET',
+            credentials: 'include'
+        }).then(async (res) => {
+            if (!mounted) return;
+            if (res.status === 200) {
+                // user is authenticated; nothing to do
+                return;
+            }
+            // on any 401 or other failure, redirect to login
             navigate('/user/login', { replace: true });
-        }
+        }).catch(() => {
+            if (!mounted) return;
+            navigate('/user/login', { replace: true });
+        });
+
+        return () => { mounted = false };
     }, [location.pathname, navigate]);
 
     return (

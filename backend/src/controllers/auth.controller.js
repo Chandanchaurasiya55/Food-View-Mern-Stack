@@ -222,7 +222,25 @@ module.exports = {
     registerUser,
     loginUser,
     logoutUser,
+    getCurrentUser,
     registerFoodPartner,
     loginFoodPartner,
     logoutFoodPartner
+}
+
+// Return current authenticated user (expects authUserMiddleware to set req.user)
+async function getCurrentUser(req, res) {
+    if (!req.user) {
+        return res.status(401).json({ message: 'Please login first' });
+    }
+
+    // Return minimal user info, hide password
+    const user = req.user;
+    return res.status(200).json({
+        user: {
+            _id: user._id,
+            email: user.email,
+            fullName: user.fullName
+        }
+    });
 }
