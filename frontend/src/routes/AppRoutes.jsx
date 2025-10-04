@@ -34,14 +34,9 @@ const AppRoutesInner = () => {
             return;
         }
 
-    // If a food partner just logged in we set a flag in localStorage.
-    // The global user/me check calls the user-me endpoint which expects
-    // a user (not food partner) token; when creating food the partner
-    // should be allowed to stay on the page immediately after login.
-    // We therefore skip the user/me check for the create-food route when
-    // that flag is present. Backend still enforces protection on the API.
-    const skipChecksForPartner = (location.pathname === '/create-food' && localStorage.getItem('foodPartnerAuth') === 'true');
-    if (skipChecksForPartner) return;
+        // If we're on the create-food route and the partner flag is set, skip user checks
+        const skipChecksForPartner = (location.pathname === '/create-food' && localStorage.getItem('foodPartnerAuth') === 'true');
+        if (skipChecksForPartner) return;
 
         let mounted = true;
 
@@ -55,6 +50,11 @@ const AppRoutesInner = () => {
             })
             .catch(() => {
                 if (!mounted) return;
+                // If the partner flag is present and we're on the create-food
+                // route, ignore 401s from the user/me endpoint (token belongs
+                // to a food-partner). Only navigate to login for other cases.
+                const stillSkip = (location.pathname === '/create-food' && localStorage.getItem('foodPartnerAuth') === 'true');
+                if (stillSkip) return;
                 navigate('/user/login', { replace: true });
             });
 

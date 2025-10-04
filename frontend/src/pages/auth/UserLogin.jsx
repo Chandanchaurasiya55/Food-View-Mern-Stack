@@ -17,7 +17,7 @@ const UserLogin = () => {
     const password = e.target.password.value;
 
     try {
-      const response = await axios.post(`${API_URL}/api/auth/user/login`, {
+      const response = await axios.post(`/api/auth/user/login`, {
         email,
         password
       });
