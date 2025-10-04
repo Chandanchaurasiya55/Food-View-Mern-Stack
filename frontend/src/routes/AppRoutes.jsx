@@ -27,7 +27,21 @@ const AppRoutesInner = () => {
             '/register'
         ];
 
-        if (allowedPaths.includes(location.pathname)) return;
+    if (allowedPaths.includes(location.pathname)) return;
+        // clear partner auth marker when visiting auth pages (login/register)
+        if (['/user/login', '/food-partner/login', '/user/register', '/food-partner/register', '/register'].includes(location.pathname)) {
+            localStorage.removeItem('foodPartnerAuth');
+            return;
+        }
+
+    // If a food partner just logged in we set a flag in localStorage.
+    // The global user/me check calls the user-me endpoint which expects
+    // a user (not food partner) token; when creating food the partner
+    // should be allowed to stay on the page immediately after login.
+    // We therefore skip the user/me check for the create-food route when
+    // that flag is present. Backend still enforces protection on the API.
+    const skipChecksForPartner = (location.pathname === '/create-food' && localStorage.getItem('foodPartnerAuth') === 'true');
+    if (skipChecksForPartner) return;
 
         let mounted = true;
 

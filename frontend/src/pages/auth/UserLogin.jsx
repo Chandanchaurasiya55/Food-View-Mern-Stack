@@ -16,14 +16,22 @@ const UserLogin = () => {
     const email = e.target.email.value;
     const password = e.target.password.value;
 
-    const response = await axios.post(`/api/auth/user/login`, {
-      email,
-      password
-    });
+    try {
+      const response = await axios.post(`${API_URL}/api/auth/user/login`, {
+        email,
+        password
+      });
 
-    console.log(response.data);
+      console.log(response.data);
 
-    navigate("/"); // Redirect to home after login
+      // Clear partner flag if it was set
+      localStorage.removeItem('foodPartnerAuth');
+
+      navigate("/"); // Redirect to home after login
+    } catch (err) {
+      console.error('Login failed', err?.response?.data || err);
+      alert(err?.response?.data?.message || 'Login failed');
+    }
 
   };
 

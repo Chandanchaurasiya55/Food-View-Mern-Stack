@@ -17,14 +17,26 @@ const FoodPartnerLogin = () => {
     const email = e.target.email.value;
     const password = e.target.password.value;
 
-    const response = await axios.post(`/api/auth/food-partner/login`, {
-      email,
-      password
-    });
+    try {
+      const response = await axios.post(`${API_URL}/api/auth/food-partner/login`, {
+        email,
+        password
+      });
 
-    console.log(response.data);
+      console.log(response.data);
 
-    navigate("/create-food"); // Redirect to create food page after login
+      // mark that a food-partner has logged in so the frontend route-guard
+      // which checks the current *user* won't immediately redirect away
+      // (the backend still protects partner APIs server-side)
+      localStorage.setItem('foodPartnerAuth', 'true');
+
+      navigate("/create-food"); // Redirect to create food page after login
+    } catch (err) {
+      // basic error handling: show error message in console and keep user on the page
+      console.error('Login failed', err?.response?.data || err);
+      // optionally show user-friendly feedback (alert for now)
+      alert(err?.response?.data?.message || 'Login failed');
+    }
 
   };
 
