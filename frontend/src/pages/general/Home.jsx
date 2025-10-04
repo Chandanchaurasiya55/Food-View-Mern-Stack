@@ -3,7 +3,6 @@ import axios from 'axios';
 import '../../styles/reels.css'
 import ReelFeed from '../../components/ReelFeed'
 
-
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Home = () => {

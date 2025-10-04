@@ -7,8 +7,17 @@ const foodPartnerRoutes = require('./routes/food-partner.routes');
 const cors = require('cors');
 
 const app = express();
+const allowedOrigins = [
+    'http://localhost:5173',
+    process.env.FRONTEND_ORIGIN || 'https://food-view-mern-stack-62tn.onrender.com'
+];
+
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: function(origin, callback) {
+        if (!origin) return callback(null, true); // allow tools like curl or server-side calls
+        if (allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
+        return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true
 }));
 app.use(cookieParser());
